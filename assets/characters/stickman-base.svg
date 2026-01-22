@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 400" width="200" height="400">
+  <!--
+    corneliuscornelius - Base Stick Figure
+    UNLICENSE - Public Domain
+
+    Structure designed for rigging in Synfig:
+    - Each limb is a separate group for bone attachment
+    - Pivot points at joints
+    - Clean geometry for easy animation
+  -->
+
+  <defs>
+    <!-- Reusable stroke style -->
+    <style>
+      .limb {
+        stroke: #1a1a1a;
+        stroke-width: 8;
+        stroke-linecap: round;
+        fill: none;
+      }
+      .joint {
+        fill: #1a1a1a;
+      }
+      .head {
+        fill: none;
+        stroke: #1a1a1a;
+        stroke-width: 8;
+      }
+    </style>
+  </defs>
+
+  <!-- HEAD - pivot at neck (100, 95) -->
+  <g id="head">
+    <circle class="head" cx="100" cy="50" r="35"/>
+    <!-- Eyes - simple dots for dark comedy aesthetic -->
+    <circle class="joint" cx="88" cy="45" r="4"/>
+    <circle class="joint" cx="112" cy="45" r="4"/>
+  </g>
+
+  <!-- TORSO - pivot at hip (100, 200) -->
+  <g id="torso">
+    <line class="limb" x1="100" y1="85" x2="100" y2="200"/>
+  </g>
+
+  <!-- LEFT ARM - pivot at shoulder (100, 100) -->
+  <g id="left-arm">
+    <!-- Upper arm: shoulder to elbow -->
+    <g id="left-upper-arm">
+      <line class="limb" x1="100" y1="100" x2="55" y2="140"/>
+      <circle class="joint" cx="55" cy="140" r="6"/>
+    </g>
+    <!-- Forearm: elbow to hand -->
+    <g id="left-forearm">
+      <line class="limb" x1="55" y1="140" x2="35" y2="190"/>
+      <circle class="joint" cx="35" cy="190" r="5"/>
+    </g>
+  </g>
+
+  <!-- RIGHT ARM - pivot at shoulder (100, 100) -->
+  <g id="right-arm">
+    <!-- Upper arm: shoulder to elbow -->
+    <g id="right-upper-arm">
+      <line class="limb" x1="100" y1="100" x2="145" y2="140"/>
+      <circle class="joint" cx="145" cy="140" r="6"/>
+    </g>
+    <!-- Forearm: elbow to hand -->
+    <g id="right-forearm">
+      <line class="limb" x1="145" y1="140" x2="165" y2="190"/>
+      <circle class="joint" cx="165" cy="190" r="5"/>
+    </g>
+  </g>
+
+  <!-- LEFT LEG - pivot at hip (100, 200) -->
+  <g id="left-leg">
+    <!-- Thigh: hip to knee -->
+    <g id="left-thigh">
+      <line class="limb" x1="100" y1="200" x2="65" y2="280"/>
+      <circle class="joint" cx="65" cy="280" r="6"/>
+    </g>
+    <!-- Shin: knee to foot -->
+    <g id="left-shin">
+      <line class="limb" x1="65" y1="280" x2="55" y2="370"/>
+      <circle class="joint" cx="55" cy="370" r="5"/>
+    </g>
+  </g>
+
+  <!-- RIGHT LEG - pivot at hip (100, 200) -->
+  <g id="right-leg">
+    <!-- Thigh: hip to knee -->
+    <g id="right-thigh">
+      <line class="limb" x1="100" y1="200" x2="135" y2="280"/>
+      <circle class="joint" cx="135" cy="280" r="6"/>
+    </g>
+    <!-- Shin: knee to foot -->
+    <g id="right-shin">
+      <line class="limb" x1="135" y1="280" x2="145" y2="370"/>
+      <circle class="joint" cx="145" cy="370" r="5"/>
+    </g>
+  </g>
+
+  <!-- Joint markers for rigging reference (hidden by default) -->
+  <g id="rig-points" style="display:none">
+    <circle cx="100" cy="50" r="3" fill="red"/>   <!-- Head center -->
+    <circle cx="100" cy="85" r="3" fill="red"/>   <!-- Neck -->
+    <circle cx="100" cy="100" r="3" fill="red"/>  <!-- Shoulders -->
+    <circle cx="100" cy="200" r="3" fill="red"/>  <!-- Hip -->
+  </g>
+</svg>

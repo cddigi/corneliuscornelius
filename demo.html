@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>corneliuscornelius - Asset Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0a10;
+      color: #888;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+    }
+
+    h1 {
+      text-align: center;
+      padding: 2rem;
+      color: #3d1515;
+      font-size: 2.5rem;
+      text-transform: lowercase;
+      letter-spacing: 0.2em;
+    }
+
+    h2 {
+      color: #5c1e1e;
+      padding: 1rem 2rem;
+      font-size: 1.2rem;
+      border-bottom: 1px solid #1a1a1a;
+    }
+
+    .scene {
+      position: relative;
+      width: 100%;
+      max-width: 1200px;
+      margin: 2rem auto;
+      aspect-ratio: 16/9;
+      overflow: hidden;
+      border: 2px solid #1a1a1a;
+      border-radius: 4px;
+    }
+
+    .scene img.bg {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .scene .character {
+      position: absolute;
+      height: 30%;
+      filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.8));
+    }
+
+    .scene .prop {
+      position: absolute;
+      filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.8));
+    }
+
+    /* Animation keyframes */
+    @keyframes fall {
+      0% { transform: translateY(-100%) rotate(0deg); }
+      100% { transform: translateY(200%) rotate(45deg); }
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    @keyframes flicker {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.8; transform: scale(0.95); }
+    }
+
+    @keyframes catapult-arm {
+      0%, 80% { transform: rotate(-15deg); }
+      85% { transform: rotate(-60deg); }
+      100% { transform: rotate(-15deg); }
+    }
+
+    @keyframes fly {
+      0% { transform: translateX(0) translateY(0); opacity: 1; }
+      100% { transform: translateX(400px) translateY(-200px); opacity: 0; }
+    }
+
+    /* Scene 1: Siege */
+    #scene1 .stickman {
+      bottom: 22%;
+      left: 15%;
+      animation: float 2s ease-in-out infinite;
+    }
+
+    #scene1 .catapult {
+      bottom: 18%;
+      right: 10%;
+      height: 20%;
+    }
+
+    #scene1 .boulder {
+      bottom: 35%;
+      right: 18%;
+      height: 8%;
+      animation: fly 3s ease-in infinite;
+    }
+
+    #scene1 .fire {
+      bottom: 45%;
+      left: 42%;
+      height: 15%;
+      animation: flicker 0.3s ease-in-out infinite;
+    }
+
+    /* Scene 2: Throne Room */
+    #scene2 .king {
+      bottom: 32%;
+      left: 47%;
+      height: 25%;
+    }
+
+    #scene2 .crown {
+      bottom: 54%;
+      left: 49%;
+      height: 6%;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    #scene2 .falling-guy {
+      top: 10%;
+      right: 25%;
+      height: 25%;
+      animation: fall 4s linear infinite;
+    }
+
+    #scene2 .sword {
+      bottom: 25%;
+      right: 30%;
+      height: 15%;
+      transform: rotate(45deg);
+    }
+
+    /* Scene 3: Aftermath */
+    #scene3 .dead {
+      bottom: 20%;
+      left: 20%;
+      width: 30%;
+      height: auto;
+    }
+
+    #scene3 .tombstone {
+      bottom: 18%;
+      right: 25%;
+      height: 25%;
+    }
+
+    #scene3 .debris {
+      bottom: 15%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 25%;
+      height: auto;
+    }
+
+    /* Asset grid */
+    .asset-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 1rem;
+      padding: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .asset-card {
+      background: #121218;
+      border: 1px solid #1a1a1a;
+      border-radius: 4px;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .asset-card img {
+      max-width: 100%;
+      max-height: 120px;
+      margin-bottom: 0.5rem;
+    }
+
+    .asset-card p {
+      font-size: 0.8rem;
+      color: #555;
+    }
+
+    footer {
+      text-align: center;
+      padding: 3rem;
+      color: #333;
+      font-size: 0.9rem;
+    }
+
+    footer a {
+      color: #5c1e1e;
+    }
+  </style>
+</head>
+<body>
+  <h1>corneliuscornelius</h1>
+
+  <h2>Scene 1: The Siege</h2>
+  <div class="scene" id="scene1">
+    <img class="bg" src="assets/backgrounds/castle-siege.svg" alt="Castle siege background">
+    <img class="character stickman" src="assets/characters/stickman-base.svg" alt="Stick figure">
+    <img class="prop catapult" src="assets/props/catapult.svg" alt="Catapult">
+    <img class="prop boulder" src="assets/props/boulder.svg" alt="Boulder">
+    <img class="prop fire" src="assets/props/fire.svg" alt="Fire">
+  </div>
+
+  <h2>Scene 2: The Throne Room</h2>
+  <div class="scene" id="scene2">
+    <img class="bg" src="assets/backgrounds/castle-interior.svg" alt="Castle interior">
+    <img class="character king" src="assets/characters/stickman-base.svg" alt="King">
+    <img class="prop crown" src="assets/props/crown.svg" alt="Crown">
+    <img class="character falling-guy" src="assets/characters/stickman-falling.svg" alt="Falling">
+    <img class="prop sword" src="assets/props/sword.svg" alt="Sword">
+  </div>
+
+  <h2>Scene 3: The Aftermath</h2>
+  <div class="scene" id="scene3">
+    <img class="bg" src="assets/backgrounds/night-sky-simple.svg" alt="Night sky">
+    <img class="character dead" src="assets/characters/stickman-dead.svg" alt="Dead stick figure">
+    <img class="prop tombstone" src="assets/props/tombstone.svg" alt="Tombstone">
+    <img class="prop debris" src="assets/props/debris-pile.svg" alt="Debris">
+  </div>
+
+  <h2>All Assets</h2>
+  <div class="asset-grid">
+    <div class="asset-card">
+      <img src="assets/characters/stickman-base.svg" alt="Base">
+      <p>stickman-base</p>
+    </div>
+    <div class="asset-card">
+      <img src="assets/characters/stickman-falling.svg" alt="Falling">
+      <p>stickman-falling</p>
+    </div>
+    <div class="asset-card">
+      <img src="assets/characters/stickman-dead.svg" alt="Dead">
+      <p>stickman-dead</p>
+    </div>
+    <div class="asset-card">
+      <img src="assets/props/catapult.svg" alt="Catapult">
+      <p>catapult</p>
+    </div>
+    <div class="asset-card">
+      <img src="assets/props/sword.svg" alt="Sword">
+      <p>sword</p>
+    </div>
+    <div class="asset-card">
+      <img src="assets/props/shield.svg" alt="Shield">
+      <p>shield</p>
+    </div>
+    <div class="asset-card">
+      <img src="assets/props/arrow.svg" alt="Arrow">
+      <p>arrow</p>
+    </div>
+    <div class="asset-card">
+      <img src="assets/props/boulder.svg" alt="Boulder">
+      <p>boulder</p>
+    </div>
+    <div class="asset-card">
+      <img src="assets/props/fire.svg" alt="Fire">
+      <p>fire</p>
+    </div>
+    <div class="asset-card">
+      <img src="assets/props/debris-pile.svg" alt="Debris">
+      <p>debris-pile</p>
+    </div>
+    <div class="asset-card">
+      <img src="assets/props/crown.svg" alt="Crown">
+      <p>crown</p>
+    </div>
+    <div class="asset-card">
+      <img src="assets/props/tombstone.svg" alt="Tombstone">
+      <p>tombstone</p>
+    </div>
+  </div>
+
+  <footer>
+    <p>UNLICENSE - Public Domain | <a href="https://github.com/corneliuscornelius">GitHub</a></p>
+  </footer>
+</body>
+</html>

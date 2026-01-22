@@ -1,0 +1,44 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Audio - raw recordings (keep edited FLAC, ignore huge WAVs)
+*.wav
+
+# Video renders (too large for git)
+*.mp4
+*.mov
+*.avi
+*.mkv
+
+# Synfig autosave and backup
+*.sif~
+*.sifz~
+*~
+
+# Kdenlive backup
+*.kdenlive~
+*.kdenlive.backup
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+
+# Render cache
+.cache/
+render_cache/
+
+# IDE
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+.env
+venv/

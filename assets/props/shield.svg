@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120" width="100" height="120">
+  <!--
+    corneliuscornelius - Shield
+    UNLICENSE - Public Domain
+
+    Medieval heater shield for stick figure defense
+  -->
+
+  <defs>
+    <linearGradient id="shield-surface" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4a4a4a"/>
+      <stop offset="50%" style="stop-color:#3a3a3a"/>
+      <stop offset="100%" style="stop-color:#2a2a2a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Shield body -->
+  <path fill="url(#shield-surface)" stroke="#1a1a1a" stroke-width="3"
+        d="M50,5 L90,15 Q95,20 95,30 L95,60 Q90,100 50,115 Q10,100 5,60 L5,30 Q5,20 10,15 Z"/>
+
+  <!-- Rim -->
+  <path fill="none" stroke="#5a5a5a" stroke-width="2"
+        d="M50,10 L85,18 Q88,22 88,30 L88,58 Q84,95 50,108 Q16,95 12,58 L12,30 Q12,22 15,18 Z"/>
+
+  <!-- Center boss -->
+  <circle cx="50" cy="55" r="15" fill="#4a4a4a" stroke="#2a2a2a" stroke-width="2"/>
+  <circle cx="50" cy="55" r="8" fill="#5a5a5a"/>
+  <circle cx="50" cy="55" r="3" fill="#3a3a3a"/>
+
+  <!-- Decorative rivets -->
+  <g fill="#5a5a5a">
+    <circle cx="50" cy="20" r="3"/>
+    <circle cx="25" cy="35" r="3"/>
+    <circle cx="75" cy="35" r="3"/>
+    <circle cx="20" cy="60" r="3"/>
+    <circle cx="80" cy="60" r="3"/>
+    <circle cx="30" cy="90" r="3"/>
+    <circle cx="70" cy="90" r="3"/>
+  </g>
+</svg>

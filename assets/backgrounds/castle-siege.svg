@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <!--
+    corneliuscornelius - Castle Siege Background
+    UNLICENSE - Public Domain
+
+    Dark, moody castle scene for Metalocalypse/Venture Bros. aesthetic
+    Layers:
+    - Sky gradient (blood red to black)
+    - Distant mountains
+    - Castle silhouette
+    - Foreground ground
+  -->
+
+  <defs>
+    <!-- Blood sky gradient -->
+    <linearGradient id="sky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a0a"/>
+      <stop offset="40%" style="stop-color:#1a0505"/>
+      <stop offset="70%" style="stop-color:#3d0a0a"/>
+      <stop offset="100%" style="stop-color:#1a0808"/>
+    </linearGradient>
+
+    <!-- Ground gradient -->
+    <linearGradient id="ground" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a1a"/>
+      <stop offset="100%" style="stop-color:#0d0d0d"/>
+    </linearGradient>
+
+    <!-- Castle wall texture hint -->
+    <pattern id="stones" width="40" height="30" patternUnits="userSpaceOnUse">
+      <rect width="40" height="30" fill="#1a1a1a"/>
+      <line x1="0" y1="15" x2="40" y2="15" stroke="#222" stroke-width="1"/>
+      <line x1="20" y1="0" x2="20" y2="15" stroke="#222" stroke-width="1"/>
+      <line x1="0" y1="15" x2="0" y2="30" stroke="#222" stroke-width="1"/>
+      <line x1="40" y1="15" x2="40" y2="30" stroke="#222" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <!-- SKY -->
+  <rect id="sky-layer" width="1920" height="1080" fill="url(#sky)"/>
+
+  <!-- DISTANT MOUNTAINS -->
+  <g id="mountains">
+    <polygon fill="#0f0808" points="0,700 200,500 400,650 600,450 800,600 1000,400 1200,550 1400,480 1600,600 1800,520 1920,650 1920,700 0,700"/>
+    <polygon fill="#150a0a" points="0,750 150,600 350,700 500,550 700,680 900,500 1100,650 1300,580 1500,700 1700,620 1920,700 1920,750 0,750"/>
+  </g>
+
+  <!-- CASTLE - Main Structure -->
+  <g id="castle">
+    <!-- Main wall -->
+    <rect x="400" y="400" width="1120" height="400" fill="url(#stones)"/>
+
+    <!-- Left tower -->
+    <rect x="350" y="250" width="150" height="550" fill="#181818"/>
+    <!-- Left tower battlements -->
+    <rect x="340" y="220" width="40" height="50" fill="#181818"/>
+    <rect x="390" y="220" width="40" height="50" fill="#181818"/>
+    <rect x="440" y="220" width="40" height="50" fill="#181818"/>
+    <rect x="490" y="220" width="30" height="50" fill="#181818"/>
+    <!-- Left tower window (ominous glow) -->
+    <rect x="400" y="320" width="50" height="80" fill="#3d1515"/>
+    <rect x="410" y="330" width="30" height="60" fill="#5c1e1e"/>
+
+    <!-- Right tower -->
+    <rect x="1420" y="280" width="150" height="520" fill="#181818"/>
+    <!-- Right tower battlements -->
+    <rect x="1410" y="250" width="40" height="50" fill="#181818"/>
+    <rect x="1460" y="250" width="40" height="50" fill="#181818"/>
+    <rect x="1510" y="250" width="40" height="50" fill="#181818"/>
+    <rect x="1560" y="250" width="30" height="50" fill="#181818"/>
+    <!-- Right tower window -->
+    <rect x="1470" y="350" width="50" height="80" fill="#3d1515"/>
+
+    <!-- Center keep -->
+    <rect x="800" y="200" width="320" height="600" fill="#151515"/>
+    <!-- Keep battlements -->
+    <rect x="780" y="160" width="50" height="60" fill="#151515"/>
+    <rect x="850" y="160" width="50" height="60" fill="#151515"/>
+    <rect x="920" y="160" width="50" height="60" fill="#151515"/>
+    <rect x="990" y="160" width="50" height="60" fill="#151515"/>
+    <rect x="1060" y="160" width="50" height="60" fill="#151515"/>
+    <!-- Keep windows -->
+    <rect x="870" y="280" width="60" height="100" fill="#3d1515"/>
+    <rect x="990" y="280" width="60" height="100" fill="#3d1515"/>
+    <!-- Keep gate -->
+    <rect x="900" y="550" width="120" height="250" fill="#0a0505"/>
+    <path d="M900,550 Q960,500 1020,550" fill="#0a0505"/>
+
+    <!-- Wall battlements -->
+    <g id="battlements">
+      <rect x="500" y="370" width="35" height="50" fill="#1a1a1a"/>
+      <rect x="560" y="370" width="35" height="50" fill="#1a1a1a"/>
+      <rect x="620" y="370" width="35" height="50" fill="#1a1a1a"/>
+      <rect x="680" y="370" width="35" height="50" fill="#1a1a1a"/>
+      <rect x="740" y="370" width="35" height="50" fill="#1a1a1a"/>
+
+      <rect x="1140" y="370" width="35" height="50" fill="#1a1a1a"/>
+      <rect x="1200" y="370" width="35" height="50" fill="#1a1a1a"/>
+      <rect x="1260" y="370" width="35" height="50" fill="#1a1a1a"/>
+      <rect x="1320" y="370" width="35" height="50" fill="#1a1a1a"/>
+      <rect x="1380" y="370" width="35" height="50" fill="#1a1a1a"/>
+    </g>
+  </g>
+
+  <!-- GROUND -->
+  <rect id="ground-layer" x="0" y="800" width="1920" height="280" fill="url(#ground)"/>
+
+  <!-- Scattered debris hints -->
+  <g id="debris" fill="#0d0d0d">
+    <polygon points="100,850 130,820 160,850"/>
+    <polygon points="250,870 270,840 310,860 290,880"/>
+    <polygon points="1700,840 1750,810 1780,850 1730,860"/>
+    <polygon points="1550,880 1580,850 1620,870"/>
+  </g>
+
+  <!-- Smoke/atmosphere layer -->
+  <g id="atmosphere" opacity="0.3">
+    <ellipse cx="500" cy="600" rx="200" ry="100" fill="#1a0808"/>
+    <ellipse cx="1400" cy="650" rx="250" ry="120" fill="#1a0808"/>
+  </g>
+</svg>

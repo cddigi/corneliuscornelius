@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 350" width="200" height="350">
+  <!--
+    corneliuscornelius - Falling Stick Figure
+    UNLICENSE - Public Domain
+
+    Arms and legs flailing in panic
+  -->
+
+  <defs>
+    <style>
+      .limb {
+        stroke: #1a1a1a;
+        stroke-width: 8;
+        stroke-linecap: round;
+        fill: none;
+      }
+      .joint {
+        fill: #1a1a1a;
+      }
+      .head {
+        fill: none;
+        stroke: #1a1a1a;
+        stroke-width: 8;
+      }
+    </style>
+  </defs>
+
+  <!-- HEAD - tilted back in panic -->
+  <g id="head" transform="rotate(-20, 100, 60)">
+    <circle class="head" cx="100" cy="60" r="35"/>
+    <!-- Wide panic eyes -->
+    <circle cx="88" cy="55" r="6" fill="#1a1a1a"/>
+    <circle cx="112" cy="55" r="6" fill="#1a1a1a"/>
+    <circle cx="88" cy="53" r="2" fill="#ffffff"/>
+    <circle cx="112" cy="53" r="2" fill="#ffffff"/>
+    <!-- Open mouth -->
+    <ellipse cx="100" cy="75" rx="10" ry="8" fill="#1a1a1a"/>
+  </g>
+
+  <!-- TORSO - slightly curved -->
+  <g id="torso">
+    <path class="limb" d="M100,95 Q95,150 100,200"/>
+  </g>
+
+  <!-- LEFT ARM - flailing up -->
+  <g id="left-arm">
+    <line class="limb" x1="100" y1="110" x2="45" y2="70"/>
+    <line class="limb" x1="45" y1="70" x2="20" y2="30"/>
+    <circle class="joint" cx="45" cy="70" r="6"/>
+    <circle class="joint" cx="20" cy="30" r="5"/>
+  </g>
+
+  <!-- RIGHT ARM - flailing up other direction -->
+  <g id="right-arm">
+    <line class="limb" x1="100" y1="110" x2="165" y2="60"/>
+    <line class="limb" x1="165" y1="60" x2="185" y2="20"/>
+    <circle class="joint" cx="165" cy="60" r="6"/>
+    <circle class="joint" cx="185" cy="20" r="5"/>
+  </g>
+
+  <!-- LEFT LEG - kicking -->
+  <g id="left-leg">
+    <line class="limb" x1="100" y1="200" x2="50" y2="260"/>
+    <line class="limb" x1="50" y1="260" x2="30" y2="330"/>
+    <circle class="joint" cx="50" cy="260" r="6"/>
+    <circle class="joint" cx="30" cy="330" r="5"/>
+  </g>
+
+  <!-- RIGHT LEG - bent up -->
+  <g id="right-leg">
+    <line class="limb" x1="100" y1="200" x2="150" y2="250"/>
+    <line class="limb" x1="150" y1="250" x2="170" y2="320"/>
+    <circle class="joint" cx="150" cy="250" r="6"/>
+    <circle class="joint" cx="170" cy="320" r="5"/>
+  </g>
+
+  <!-- Motion lines -->
+  <g id="motion-lines" stroke="#1a1a1a" stroke-width="2" opacity="0.5">
+    <line x1="100" y1="5" x2="100" y2="25"/>
+    <line x1="80" y1="8" x2="80" y2="22"/>
+    <line x1="120" y1="8" x2="120" y2="22"/>
+  </g>
+</svg>

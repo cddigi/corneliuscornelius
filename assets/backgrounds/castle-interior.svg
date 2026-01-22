@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <!--
+    corneliuscornelius - Castle Interior
+    UNLICENSE - Public Domain
+
+    Dark throne room / great hall interior
+  -->
+
+  <defs>
+    <linearGradient id="floor" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a1a"/>
+      <stop offset="100%" style="stop-color:#0d0d0d"/>
+    </linearGradient>
+
+    <linearGradient id="wall" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#151515"/>
+      <stop offset="100%" style="stop-color:#1a1a1a"/>
+    </linearGradient>
+
+    <!-- Torch glow -->
+    <radialGradient id="torch-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#3d1515" stop-opacity="0.6"/>
+      <stop offset="100%" style="stop-color:#3d1515" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Stone pattern -->
+    <pattern id="wall-stones" width="80" height="40" patternUnits="userSpaceOnUse">
+      <rect width="80" height="40" fill="#1a1a1a"/>
+      <line x1="0" y1="20" x2="80" y2="20" stroke="#151515" stroke-width="1"/>
+      <line x1="40" y1="0" x2="40" y2="20" stroke="#151515" stroke-width="1"/>
+      <line x1="0" y1="20" x2="0" y2="40" stroke="#151515" stroke-width="1"/>
+      <line x1="80" y1="20" x2="80" y2="40" stroke="#151515" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <!-- CEILING - dark void -->
+  <rect x="0" y="0" width="1920" height="200" fill="#080808"/>
+
+  <!-- BACK WALL -->
+  <rect x="200" y="200" width="1520" height="500" fill="url(#wall-stones)"/>
+
+  <!-- Arched windows (dark, no light) -->
+  <g id="windows">
+    <path d="M400,250 L400,450 Q500,250 600,450 L600,250" fill="#050505" stroke="#0d0d0d" stroke-width="3"/>
+    <path d="M860,250 L860,450 Q960,250 1060,450 L1060,250" fill="#050505" stroke="#0d0d0d" stroke-width="3"/>
+    <path d="M1320,250 L1320,450 Q1420,250 1520,450 L1520,250" fill="#050505" stroke="#0d0d0d" stroke-width="3"/>
+  </g>
+
+  <!-- LEFT WALL (perspective) -->
+  <polygon fill="url(#wall-stones)" points="0,100 200,200 200,700 0,900"/>
+  <line x1="0" y1="100" x2="200" y2="200" stroke="#0d0d0d" stroke-width="3"/>
+
+  <!-- RIGHT WALL (perspective) -->
+  <polygon fill="url(#wall-stones)" points="1920,100 1720,200 1720,700 1920,900"/>
+  <line x1="1920" y1="100" x2="1720" y2="200" stroke="#0d0d0d" stroke-width="3"/>
+
+  <!-- FLOOR -->
+  <polygon fill="url(#floor)" points="200,700 1720,700 1920,1080 0,1080"/>
+
+  <!-- Floor tiles perspective lines -->
+  <g stroke="#151515" stroke-width="1" opacity="0.5">
+    <line x1="400" y1="700" x2="200" y2="1080"/>
+    <line x1="600" y1="700" x2="400" y2="1080"/>
+    <line x1="800" y1="700" x2="600" y2="1080"/>
+    <line x1="1000" y1="700" x2="960" y2="1080"/>
+    <line x1="1200" y1="700" x2="1320" y2="1080"/>
+    <line x1="1400" y1="700" x2="1520" y2="1080"/>
+    <line x1="1600" y1="700" x2="1720" y2="1080"/>
+  </g>
+
+  <!-- PILLARS -->
+  <g id="pillars">
+    <!-- Left pillar -->
+    <rect x="280" y="200" width="60" height="500" fill="#1f1f1f"/>
+    <rect x="275" y="180" width="70" height="30" fill="#252525"/>
+    <rect x="275" y="680" width="70" height="30" fill="#252525"/>
+
+    <!-- Right pillar -->
+    <rect x="1580" y="200" width="60" height="500" fill="#1f1f1f"/>
+    <rect x="1575" y="180" width="70" height="30" fill="#252525"/>
+    <rect x="1575" y="680" width="70" height="30" fill="#252525"/>
+  </g>
+
+  <!-- TORCHES with glow -->
+  <g id="torches">
+    <!-- Left torch -->
+    <ellipse cx="310" cy="400" rx="80" ry="100" fill="url(#torch-glow)"/>
+    <rect x="305" y="380" width="10" height="40" fill="#3d2b1f"/>
+    <ellipse cx="310" cy="375" rx="8" ry="12" fill="#c03000"/>
+    <ellipse cx="310" cy="370" rx="5" ry="8" fill="#e06000"/>
+    <ellipse cx="310" cy="367" rx="3" ry="5" fill="#ffcc00"/>
+
+    <!-- Right torch -->
+    <ellipse cx="1610" cy="400" rx="80" ry="100" fill="url(#torch-glow)"/>
+    <rect x="1605" y="380" width="10" height="40" fill="#3d2b1f"/>
+    <ellipse cx="1610" cy="375" rx="8" ry="12" fill="#c03000"/>
+    <ellipse cx="1610" cy="370" rx="5" ry="8" fill="#e06000"/>
+    <ellipse cx="1610" cy="367" rx="3" ry="5" fill="#ffcc00"/>
+  </g>
+
+  <!-- THRONE PLATFORM -->
+  <g id="throne-area">
+    <rect x="800" y="550" width="320" height="150" fill="#151515" stroke="#0d0d0d" stroke-width="2"/>
+    <rect x="820" y="530" width="280" height="30" fill="#1a1a1a"/>
+
+    <!-- Simple throne silhouette -->
+    <rect x="900" y="400" width="120" height="150" fill="#0d0d0d"/>
+    <rect x="890" y="380" width="140" height="30" fill="#0d0d0d"/>
+    <polygon points="890,380 960,300 1030,380" fill="#0d0d0d"/>
+  </g>
+
+  <!-- Ambient darkness overlay -->
+  <rect x="0" y="0" width="1920" height="1080" fill="#000000" opacity="0.2"/>
+</svg>

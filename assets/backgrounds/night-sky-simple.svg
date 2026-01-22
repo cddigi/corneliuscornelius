@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <!--
+    corneliuscornelius - Simple Night Sky
+    UNLICENSE - Public Domain
+
+    Minimal dark background for dialogue-heavy scenes
+  -->
+
+  <defs>
+    <linearGradient id="nightsky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#050508"/>
+      <stop offset="50%" style="stop-color:#0a0a10"/>
+      <stop offset="100%" style="stop-color:#12121a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="1920" height="1080" fill="url(#nightsky)"/>
+
+  <!-- Stars - sparse, moody -->
+  <g id="stars" fill="#ffffff">
+    <circle cx="150" cy="100" r="1" opacity="0.6"/>
+    <circle cx="400" cy="200" r="1.5" opacity="0.8"/>
+    <circle cx="600" cy="80" r="1" opacity="0.5"/>
+    <circle cx="850" cy="150" r="2" opacity="0.9"/>
+    <circle cx="1100" cy="50" r="1" opacity="0.6"/>
+    <circle cx="1300" cy="180" r="1.5" opacity="0.7"/>
+    <circle cx="1500" cy="100" r="1" opacity="0.5"/>
+    <circle cx="1700" cy="220" r="1.5" opacity="0.8"/>
+    <circle cx="1850" cy="80" r="1" opacity="0.6"/>
+    <circle cx="200" cy="350" r="1" opacity="0.4"/>
+    <circle cx="550" cy="400" r="1.5" opacity="0.6"/>
+    <circle cx="900" cy="320" r="1" opacity="0.5"/>
+    <circle cx="1250" cy="380" r="2" opacity="0.7"/>
+    <circle cx="1600" cy="350" r="1" opacity="0.5"/>
+    <circle cx="1780" cy="420" r="1.5" opacity="0.6"/>
+  </g>
+
+  <!-- Subtle moon glow -->
+  <g id="moon">
+    <circle cx="1650" cy="200" r="80" fill="#1a1a25" opacity="0.3"/>
+    <circle cx="1650" cy="200" r="50" fill="#252530" opacity="0.5"/>
+    <circle cx="1650" cy="200" r="35" fill="#35354a" opacity="0.4"/>
+  </g>
+</svg>
