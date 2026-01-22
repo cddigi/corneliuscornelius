@@ -1,14 +1,138 @@
 #!/bin/bash
 # corneliuscornelius - Batch Render Synfig Files
 # UNLICENSE - Public Domain
-#
-# Usage: ./scripts/render-episode.sh episodes/001-tower-building
 
 set -e
+
+VERSION="1.0.0"
+
+show_help() {
+    cat << 'EOF'
+render-episode.sh - Batch render Synfig animations to PNG sequences
+
+USAGE
+    ./scripts/render-episode.sh <episode-directory>
+    ./scripts/render-episode.sh --help | --help-json
+
+ARGUMENTS
+    <episode-directory>    Path to episode folder containing animation/ subdir
+                           (e.g., episodes/001-tower-building)
+
+OPTIONS
+    -h, --help          Show this help message
+    --help-json         Output help as JSON (for machine parsing)
+    --version           Show version number
+
+EXAMPLES
+    ./scripts/render-episode.sh episodes/001-tower-building
+    ./scripts/render-episode.sh episodes/002-catapult-chaos
+
+RENDERS
+    For each .sif file in <episode-directory>/animation/:
+
+    <episode-directory>/export/frames/<basename>/
+    └── <basename>.0001.png    PNG sequence at 1920x1080
+    └── <basename>.0002.png
+    └── ...
+
+REQUIREMENTS
+    synfig    Synfig CLI renderer
+              Install: brew install synfig (macOS)
+                       apt install synfigstudio (Linux)
+
+WORKFLOW
+    1. Create episode with: ./scripts/new-episode.sh <number> <slug>
+    2. Create Synfig animations in animation/
+    3. Run this script to batch render all .sif files
+    4. Import PNG sequences into Kdenlive:
+       - Project > Add Clip > Add Image Sequence
+       - Select first frame of each sequence
+    5. Sync with audio and export final MP4
+
+EXIT CODES
+    0    Success - all files rendered
+    1    Invalid arguments, missing directory, or synfig not found
+
+SEE ALSO
+    ./scripts/new-episode.sh       Create new episode directory structure
+    demo.html                      Preview character assets and animations
+    assets/COLOR-PALETTE.md        Color codes for consistent styling
+EOF
+}
+
+show_help_json() {
+    cat << 'EOF'
+{
+  "name": "render-episode.sh",
+  "version": "1.0.0",
+  "description": "Batch render Synfig animations to PNG sequences",
+  "usage": "./scripts/render-episode.sh <episode-directory>",
+  "arguments": [
+    {
+      "name": "episode-directory",
+      "required": true,
+      "description": "Path to episode folder containing animation/ subdir",
+      "example": "episodes/001-tower-building"
+    }
+  ],
+  "options": [
+    {"short": "-h", "long": "--help", "description": "Show help message"},
+    {"long": "--help-json", "description": "Output help as JSON"},
+    {"long": "--version", "description": "Show version number"}
+  ],
+  "examples": [
+    {"command": "./scripts/render-episode.sh episodes/001-tower-building", "description": "Render first episode"},
+    {"command": "./scripts/render-episode.sh episodes/002-catapult-chaos", "description": "Render second episode"}
+  ],
+  "renders": {
+    "input": "<episode-directory>/animation/*.sif",
+    "output": "<episode-directory>/export/frames/<basename>/",
+    "format": "PNG sequence",
+    "resolution": "1920x1080"
+  },
+  "requirements": [
+    {
+      "name": "synfig",
+      "description": "Synfig CLI renderer",
+      "install": {
+        "macos": "brew install synfig",
+        "linux": "apt install synfigstudio"
+      }
+    }
+  ],
+  "exit_codes": [
+    {"code": 0, "description": "Success - all files rendered"},
+    {"code": 1, "description": "Invalid arguments, missing directory, or synfig not found"}
+  ],
+  "see_also": [
+    {"name": "./scripts/new-episode.sh", "description": "Create new episode directory structure"},
+    {"name": "demo.html", "description": "Preview character assets and animations"},
+    {"name": "assets/COLOR-PALETTE.md", "description": "Color codes for consistent styling"}
+  ]
+}
+EOF
+}
+
+if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
+    show_help
+    exit 0
+fi
+
+if [ "$1" = "--help-json" ]; then
+    show_help_json
+    exit 0
+fi
+
+if [ "$1" = "--version" ]; then
+    echo "render-episode.sh version $VERSION"
+    exit 0
+fi
 
 if [ -z "$1" ]; then
     echo "Usage: $0 <episode-directory>"
     echo "Example: $0 episodes/001-tower-building"
+    echo ""
+    echo "Run '$0 --help' for more information."
     exit 1
 fi
 
