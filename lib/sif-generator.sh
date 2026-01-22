@@ -19,15 +19,20 @@ SIF_VIEW_TOP=2.25
 SIF_VIEW_BOTTOM=-2.25
 
 # Synfig color codes (RGBA 0-1 scale) from COLOR-PALETTE.md
-declare -A SIF_COLORS=(
-    ["bg_void"]="0.020 0.020 0.031 1.0"
-    ["bg_night"]="0.039 0.039 0.063 1.0"
-    ["bg_blood_dark"]="0.102 0.020 0.020 1.0"
-    ["bg_blood"]="0.239 0.039 0.039 1.0"
-    ["stick_black"]="0.102 0.102 0.102 1.0"
-    ["fire_orange"]="0.753 0.188 0.000 1.0"
-    ["fire_yellow"]="1.000 0.800 0.000 1.0"
-)
+# Using function lookup for bash 3.x compatibility
+sif_get_color() {
+    local color_name="$1"
+    case "$color_name" in
+        bg_void)       echo "0.020 0.020 0.031 1.0" ;;
+        bg_night)      echo "0.039 0.039 0.063 1.0" ;;
+        bg_blood_dark) echo "0.102 0.020 0.020 1.0" ;;
+        bg_blood)      echo "0.239 0.039 0.039 1.0" ;;
+        stick_black)   echo "0.102 0.102 0.102 1.0" ;;
+        fire_orange)   echo "0.753 0.188 0.000 1.0" ;;
+        fire_yellow)   echo "1.000 0.800 0.000 1.0" ;;
+        *)             echo "0.039 0.039 0.063 1.0" ;;  # default to bg_night
+    esac
+}
 
 # Convert normalized position (0-1) to Synfig units
 # Usage: sif_normalize_x 0.5  # returns 0.0 (center)
@@ -69,7 +74,7 @@ sif_canvas_footer() {
 sif_solid_color() {
     local color_name="${1:-bg_night}"
     local desc="${2:-Background}"
-    local color="${SIF_COLORS[$color_name]:-${SIF_COLORS[bg_night]}}"
+    local color=$(sif_get_color "$color_name")
 
     # Parse color components
     local r g b a

@@ -34,25 +34,28 @@ CREATES
     ├── audio/          Raw WAV + edited FLAC files
     ├── animation/      Synfig .sif project files
     ├── export/         Final MP4 renders + PNG sequences
+    ├── storyboard.json JSON scene definitions for generate-storyboard.sh
     └── NOTES.md        Storyboard checklist template
 
 WORKFLOW
     1. Run this script to scaffold the episode
     2. Record audio and place raw .wav in audio/
     3. Edit audio in Tenacity, export as FLAC
-    4. Fill out storyboard in NOTES.md
-    5. Create Synfig animations in animation/
-    6. Render with: ./scripts/render-episode.sh episodes/<episode-dir>
-    7. Composite in Kdenlive and export final MP4
+    4. Define scenes in storyboard.json
+    5. Generate .sif files: ./scripts/generate-storyboard.sh episodes/<episode-dir>/storyboard.json
+    6. Refine animations in Synfig Studio (optional)
+    7. Render with: ./scripts/render-episode.sh episodes/<episode-dir>
+    8. Composite in Kdenlive and export final MP4
 
 EXIT CODES
     0    Success
     1    Invalid arguments or episode already exists
 
 SEE ALSO
-    ./scripts/render-episode.sh    Batch render Synfig files to PNG sequences
-    demo.html                      Preview character assets and animations
-    assets/COLOR-PALETTE.md        Color codes for consistent styling
+    ./scripts/generate-storyboard.sh  Generate Synfig .sif from storyboard.json
+    ./scripts/render-episode.sh       Batch render Synfig files to PNG sequences
+    demo.html                         Preview character assets and animations
+    assets/COLOR-PALETTE.md           Color codes for consistent styling
 EOF
 }
 
@@ -93,6 +96,7 @@ show_help_json() {
       {"path": "audio/", "description": "Raw WAV + edited FLAC files"},
       {"path": "animation/", "description": "Synfig .sif project files"},
       {"path": "export/", "description": "Final MP4 renders + PNG sequences"},
+      {"path": "storyboard.json", "description": "JSON scene definitions"},
       {"path": "NOTES.md", "description": "Storyboard checklist template"}
     ]
   },
@@ -101,6 +105,7 @@ show_help_json() {
     {"code": 1, "description": "Invalid arguments or episode already exists"}
   ],
   "see_also": [
+    {"name": "./scripts/generate-storyboard.sh", "description": "Generate Synfig .sif from storyboard.json"},
     {"name": "./scripts/render-episode.sh", "description": "Batch render Synfig files to PNG sequences"},
     {"name": "demo.html", "description": "Preview character assets and animations"},
     {"name": "assets/COLOR-PALETTE.md", "description": "Color codes for consistent styling"}
@@ -177,18 +182,45 @@ Describe the dark visual gags that contrast with the audio:
 
 EOF
 
+# Create storyboard.json template
+cat > "$EPISODE_DIR/storyboard.json" << EOF
+{
+  "episode": "${EPISODE_NUM}",
+  "title": "${EPISODE_SLUG}",
+  "scenes": [
+    {
+      "id": "scene-001",
+      "name": "Opening shot",
+      "duration": 5.0,
+      "background": "castle-siege",
+      "characters": [
+        {
+          "asset": "stickman-base",
+          "position": {"x": 0.5, "y": 0.7},
+          "scale": 1.0
+        }
+      ],
+      "props": [],
+      "description": "Describe the dark visual gag for this scene"
+    }
+  ]
+}
+EOF
+
 # Create .gitkeep files
 touch "$EPISODE_DIR/audio/.gitkeep"
 touch "$EPISODE_DIR/animation/.gitkeep"
 touch "$EPISODE_DIR/export/.gitkeep"
 
-echo "✓ Created: $EPISODE_DIR/"
+echo "Created: $EPISODE_DIR/"
 echo "  ├── audio/"
 echo "  ├── animation/"
 echo "  ├── export/"
+echo "  ├── storyboard.json"
 echo "  └── NOTES.md"
 echo ""
 echo "Next steps:"
 echo "  1. Add raw .wav to audio/"
-echo "  2. Edit storyboard in NOTES.md"
-echo "  3. Create .sif files in animation/"
+echo "  2. Define scenes in storyboard.json"
+echo "  3. Generate .sif files:"
+echo "     ./scripts/generate-storyboard.sh $EPISODE_DIR/storyboard.json"
