@@ -4,18 +4,25 @@
 
 set -e
 
+VERSION="1.0.0"
+
 show_help() {
     cat << 'EOF'
 new-episode.sh - Create episode directory structure for corneliuscornelius
 
 USAGE
     ./scripts/new-episode.sh <episode-number> <episode-slug>
-    ./scripts/new-episode.sh --help
+    ./scripts/new-episode.sh --help | --help-json
 
 ARGUMENTS
     <episode-number>    Three-digit episode number (e.g., 001, 012, 100)
     <episode-slug>      URL-friendly name using lowercase and hyphens
                         (e.g., "tower-building", "castle-siege")
+
+OPTIONS
+    -h, --help          Show this help message
+    --help-json         Output help as JSON (for machine parsing)
+    --version           Show version number
 
 EXAMPLES
     ./scripts/new-episode.sh 001 tower-building
@@ -38,6 +45,10 @@ WORKFLOW
     6. Render with: ./scripts/render-episode.sh episodes/<episode-dir>
     7. Composite in Kdenlive and export final MP4
 
+EXIT CODES
+    0    Success
+    1    Invalid arguments or episode already exists
+
 SEE ALSO
     ./scripts/render-episode.sh    Batch render Synfig files to PNG sequences
     demo.html                      Preview character assets and animations
@@ -45,8 +56,71 @@ SEE ALSO
 EOF
 }
 
+show_help_json() {
+    cat << 'EOF'
+{
+  "name": "new-episode.sh",
+  "version": "1.0.0",
+  "description": "Create episode directory structure for corneliuscornelius",
+  "usage": "./scripts/new-episode.sh <episode-number> <episode-slug>",
+  "arguments": [
+    {
+      "name": "episode-number",
+      "required": true,
+      "description": "Three-digit episode number (e.g., 001, 012, 100)",
+      "pattern": "^[0-9]{3}$"
+    },
+    {
+      "name": "episode-slug",
+      "required": true,
+      "description": "URL-friendly name using lowercase and hyphens",
+      "pattern": "^[a-z0-9-]+$"
+    }
+  ],
+  "options": [
+    {"short": "-h", "long": "--help", "description": "Show help message"},
+    {"long": "--help-json", "description": "Output help as JSON"},
+    {"long": "--version", "description": "Show version number"}
+  ],
+  "examples": [
+    {"command": "./scripts/new-episode.sh 001 tower-building", "description": "Create first episode"},
+    {"command": "./scripts/new-episode.sh 002 catapult-chaos", "description": "Create second episode"},
+    {"command": "./scripts/new-episode.sh 010 throne-room-drama", "description": "Create tenth episode"}
+  ],
+  "creates": {
+    "path": "episodes/<number>-<slug>/",
+    "structure": [
+      {"path": "audio/", "description": "Raw WAV + edited FLAC files"},
+      {"path": "animation/", "description": "Synfig .sif project files"},
+      {"path": "export/", "description": "Final MP4 renders + PNG sequences"},
+      {"path": "NOTES.md", "description": "Storyboard checklist template"}
+    ]
+  },
+  "exit_codes": [
+    {"code": 0, "description": "Success"},
+    {"code": 1, "description": "Invalid arguments or episode already exists"}
+  ],
+  "see_also": [
+    {"name": "./scripts/render-episode.sh", "description": "Batch render Synfig files to PNG sequences"},
+    {"name": "demo.html", "description": "Preview character assets and animations"},
+    {"name": "assets/COLOR-PALETTE.md", "description": "Color codes for consistent styling"}
+  ]
+}
+EOF
+}
+
 if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
     show_help
+    exit 0
+fi
+
+if [ "$1" = "--help-json" ]; then
+    show_help_json
+    exit 0
+fi
+
+if [ "$1" = "--version" ]; then
+    echo "new-episode.sh version $VERSION"
     exit 0
 fi
 
