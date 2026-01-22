@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  corneliuscornelius - Base Scene Template
+  UNLICENSE - Public Domain
+
+  Reference template for Synfig .sif file structure.
+  Used by generate-storyboard.sh as a structural guide.
+
+  Canvas: 1920x1080 at 24fps
+  Duration: 5 seconds (adjustable)
+  Coordinate system: -4 to 4 (horizontal), 2.25 to -2.25 (vertical)
+-->
+<canvas version="1.2" width="1920" height="1080"
+        xres="2834.645669" yres="2834.645669"
+        view-box="-4 2.25 4 -2.25"
+        antialias="1" fps="24" begin-time="0f" end-time="5s"
+        bgcolor="0.039 0.039 0.063 1.0">
+  <name>Base Scene Template</name>
+  <desc>Template scene with placeholder layers</desc>
+
+  <!-- BACKGROUND LAYER -->
+  <!-- Replace with imported background SVG or solid color -->
+  <layer type="solid_color" active="true" version="0.1" desc="Background">
+    <param name="z_depth">
+      <real value="0.0"/>
+    </param>
+    <param name="amount">
+      <real value="1.0"/>
+    </param>
+    <param name="blend_method">
+      <integer value="0"/>
+    </param>
+    <param name="color">
+      <color>
+        <r>0.039</r>
+        <g>0.039</g>
+        <b>0.063</b>
+        <a>1.0</a>
+      </color>
+    </param>
+  </layer>
+
+  <!-- PROPS GROUP -->
+  <!-- Background props (behind characters) -->
+  <layer type="group" active="true" version="0.1" desc="Background Props">
+    <param name="z_depth">
+      <real value="0.0"/>
+    </param>
+    <param name="amount">
+      <real value="1.0"/>
+    </param>
+    <param name="blend_method">
+      <integer value="0"/>
+    </param>
+    <param name="origin">
+      <vector>
+        <x>0.0</x>
+        <y>0.0</y>
+      </vector>
+    </param>
+    <param name="canvas">
+      <canvas>
+        <!-- Add background prop layers here -->
+      </canvas>
+    </param>
+  </layer>
+
+  <!-- CHARACTERS GROUP -->
+  <layer type="group" active="true" version="0.1" desc="Characters">
+    <param name="z_depth">
+      <real value="0.0"/>
+    </param>
+    <param name="amount">
+      <real value="1.0"/>
+    </param>
+    <param name="blend_method">
+      <integer value="0"/>
+    </param>
+    <param name="origin">
+      <vector>
+        <x>0.0</x>
+        <y>0.0</y>
+      </vector>
+    </param>
+    <param name="canvas">
+      <canvas>
+        <!-- Add character import layers here -->
+      </canvas>
+    </param>
+  </layer>
+
+  <!-- FOREGROUND PROPS GROUP -->
+  <!-- Props in front of characters -->
+  <layer type="group" active="true" version="0.1" desc="Foreground Props">
+    <param name="z_depth">
+      <real value="0.0"/>
+    </param>
+    <param name="amount">
+      <real value="1.0"/>
+    </param>
+    <param name="blend_method">
+      <integer value="0"/>
+    </param>
+    <param name="origin">
+      <vector>
+        <x>0.0</x>
+        <y>0.0</y>
+      </vector>
+    </param>
+    <param name="canvas">
+      <canvas>
+        <!-- Add foreground prop layers here -->
+      </canvas>
+    </param>
+  </layer>
+
+  <!-- EFFECTS GROUP -->
+  <!-- Overlays, filters, atmosphere -->
+  <layer type="group" active="true" version="0.1" desc="Effects">
+    <param name="z_depth">
+      <real value="0.0"/>
+    </param>
+    <param name="amount">
+      <real value="1.0"/>
+    </param>
+    <param name="blend_method">
+      <integer value="0"/>
+    </param>
+    <param name="origin">
+      <vector>
+        <x>0.0</x>
+        <y>0.0</y>
+      </vector>
+    </param>
+    <param name="canvas">
+      <canvas>
+        <!-- Add effect layers here (glow, fog, etc.) -->
+      </canvas>
+    </param>
+  </layer>
+
+</canvas>
