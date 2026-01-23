@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Death of Life - Procedural Gore Background</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #050508;
+    }
+    canvas {
+      display: block;
+    }
+    /* Recording UI - hidden by default, shown with ?controls */
+    .controls {
+      display: none;
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      font-family: monospace;
+      color: #888;
+      background: rgba(0,0,0,0.8);
+      padding: 15px;
+      border: 1px solid #333;
+      border-radius: 4px;
+    }
+    .controls.visible { display: block; }
+    .controls button {
+      background: #1a1a1a;
+      border: 1px solid #3d1515;
+      color: #888;
+      padding: 8px 16px;
+      margin: 5px;
+      cursor: pointer;
+      font-family: monospace;
+    }
+    .controls button:hover {
+      background: #3d1515;
+      color: #fff;
+    }
+    .controls .status {
+      margin-top: 10px;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+
+  <div class="controls" id="controls">
+    <div>Death of Life</div>
+    <div>1920x1080 @ 30fps</div>
+    <button id="recordBtn">Start Recording</button>
+    <button id="resetBtn">Reset</button>
+    <div class="status" id="status">Ready</div>
+  </div>
+
+  <script>
+    /**
+     * DEATH OF LIFE
+     * A cellular automaton for procedural video backgrounds.
+     * Fixed 1920x1080 resolution, high-detail stick figure gore.
+     *
+     * URL params:
+     *   ?controls - Show recording UI
+     *   ?seed=N   - Set random seed for reproducibility
+     *   ?speed=N  - Tick speed multiplier (default 1)
+     */
+    (function() {
+      'use strict';
+
+      // ============================================
+      // CONFIGURATION
+      // ============================================
+      const CONFIG = {
+        // Video output resolution
+        WIDTH: 1920,
+        HEIGHT: 1080,
+
+        // Simulation
+        CELL_SIZE: 64,
+        TICK_INTERVAL: 600,
+        SPAWN_CHANCE: 0.06,
+        RANDOM_SPAWN_RATE: 0.003,
+
+        // Gore
+        BLOOD_SPREAD_CHANCE: 0.25,
+        GORE_FADE_RATE: 0.02,
+        MAX_BLOOD_POOLS: 500,
+
+        // Rendering
+        FIGURE_SCALE: 0.75,
+        LINE_WIDTH_BASE: 3,
+        ENABLE_SHADOWS: true,
+        ENABLE_GLOW: true
+      };
+
+      // Color palette
+      const COLORS = {
+        void: '#050508',
+        voidLight: '#080810',
+        night: '#0a0a10',
+        purple: '#12121a',
+
+        bloodBlack: '#0a0202',
+        bloodDark: '#1a0505',
+        bloodMid: '#2d0a0a',
+        bloodRed: '#3d1515',
+        bloodBright: '#5c1e1e',
+        bloodGlow: '#8a2525',
+
+        stick: '#1a1a1a',
+        stickMid: '#252525',
+        stickLight: '#353535',
+        stickPale: '#454545',
+
+        bone: '#c0b8a8',
+        boneLight: '#d8d0c0',
+
+        fireDark: '#8a2000',
+        fireOrange: '#c03000',
+        fireBright: '#e06000',
+        fireYellow: '#ffcc00'
+      };
+
+      // Cell states
+      const STATE = {
+        EMPTY: 0,
+        ALIVE: 1,
+        DYING: 2,
+        DEAD: 3,
+        GORE: 4
+      };
+
+      // Death types with weights
+      const DEATH_TYPES = [
+        { type: 'explode', weight: 15 },
+        { type: 'collapse', weight: 25 },
+        { type: 'dismember', weight: 20 },
+        { type: 'impale', weight: 15 },
+        { type: 'decapitate', weight: 10 },
+        { type: 'bisect', weight: 10 },
+        { type: 'crush', weight: 5 }
+      ];
+
+      // Body parts
+      const BODY_PARTS = ['head', 'torso', 'left_arm', 'right_arm', 'left_leg', 'right_leg'];
+
+      // ============================================
+      // STATE
+      // ============================================
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+
+      let cols, rows;
+      let grid = [];
+      let goreLayer = [];
+      let bloodPools = [];
+      let bodyParts = [];
+      let lastTick = 0;
+      let frameCount = 0;
+      let isRecording = false;
+      let mediaRecorder = null;
+      let recordedChunks = [];
+
+      // Parse URL params
+      const params = new URLSearchParams(window.location.search);
+      const showControls = params.has('controls');
+      const speedMultiplier = parseFloat(params.get('speed')) || 1;
+      let seed = parseInt(params.get('seed')) || Date.now();
+
+      // Seeded random
+      function seededRandom() {
+        seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+        return seed / 0x7fffffff;
+      }
+
+      // Weighted random death type
+      function randomDeathType() {
+        const totalWeight = DEATH_TYPES.reduce((sum, d) => sum + d.weight, 0);
+        let r = seededRandom() * totalWeight;
+        for (const d of DEATH_TYPES) {
+          r -= d.weight;
+          if (r <= 0) return d.type;
+        }
+        return 'explode';
+      }
+
+      // ============================================
+      // INITIALIZATION
+      // ============================================
+      function init() {
+        canvas.width = CONFIG.WIDTH;
+        canvas.height = CONFIG.HEIGHT;
+
+        cols = Math.ceil(CONFIG.WIDTH / CONFIG.CELL_SIZE);
+        rows = Math.ceil(CONFIG.HEIGHT / CONFIG.CELL_SIZE);
+
+        // Initialize grid
+        grid = [];
+        goreLayer = [];
+        bloodPools = [];
+        bodyParts = [];
+
+        for (let y = 0; y < rows; y++) {
+          grid[y] = [];
+          goreLayer[y] = [];
+          for (let x = 0; x < cols; x++) {
+            const cell = {
+              state: STATE.EMPTY,
+              age: 0,
+              deathType: null,
+              deathFrame: 0,
+              pose: seededRandom() * Math.PI * 0.1 - 0.05, // Slight pose variation
+              facing: seededRandom() > 0.5 ? 1 : -1
+            };
+
+            // Seed initial population
+            if (seededRandom() < CONFIG.SPAWN_CHANCE) {
+              cell.state = STATE.ALIVE;
+            }
+
+            grid[y][x] = cell;
+            goreLayer[y][x] = null;
+          }
+        }
+
+        // Show controls if requested
+        if (showControls) {
+          document.getElementById('controls').classList.add('visible');
+          setupRecording();
+        }
+
+        requestAnimationFrame(loop);
+      }
+
+      // ============================================
+      // SIMULATION
+      // ============================================
+      function countNeighbors(x, y) {
+        let count = 0;
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            if (dx === 0 && dy === 0) continue;
+            const nx = (x + dx + cols) % cols;
+            const ny = (y + dy + rows) % rows;
+            if (grid[ny][nx].state === STATE.ALIVE) count++;
+          }
+        }
+        return count;
+      }
+
+      function tick() {
+        const newGrid = [];
+
+        for (let y = 0; y < rows; y++) {
+          newGrid[y] = [];
+          for (let x = 0; x < cols; x++) {
+            const cell = grid[y][x];
+            const neighbors = countNeighbors(x, y);
+            const newCell = { ...cell };
+
+            switch (cell.state) {
+              case STATE.ALIVE:
+                newCell.age++;
+                // Modified GoL rules - tuned for visual interest
+                if (neighbors < 2) {
+                  // Loneliness - quiet death
+                  newCell.state = STATE.DYING;
+                  newCell.deathType = seededRandom() > 0.7 ? 'collapse' : 'impale';
+                  newCell.deathFrame = 0;
+                } else if (neighbors > 3) {
+                  // Overpopulation - violent death
+                  newCell.state = STATE.DYING;
+                  newCell.deathType = randomDeathType();
+                  newCell.deathFrame = 0;
+                }
+                break;
+
+              case STATE.DYING:
+                newCell.deathFrame++;
+                if (newCell.deathFrame > 8) {
+                  newCell.state = STATE.DEAD;
+                  createGore(x, y, cell.deathType);
+                }
+                break;
+
+              case STATE.DEAD:
+                newCell.age++;
+                if (newCell.age > 15) {
+                  newCell.state = STATE.GORE;
+                  newCell.age = 0;
+                }
+                break;
+
+              case STATE.GORE:
+                newCell.age++;
+                // Gore eventually fades
+                if (newCell.age > 80 && seededRandom() < CONFIG.GORE_FADE_RATE) {
+                  newCell.state = STATE.EMPTY;
+                  newCell.age = 0;
+                  // Clear gore layer too
+                  if (goreLayer[y][x]) {
+                    goreLayer[y][x].fading = true;
+                  }
+                }
+                break;
+
+              case STATE.EMPTY:
+                // Birth rule
+                if (neighbors === 3 && !goreLayer[y][x]) {
+                  newCell.state = STATE.ALIVE;
+                  newCell.age = 0;
+                  newCell.pose = seededRandom() * Math.PI * 0.1 - 0.05;
+                  newCell.facing = seededRandom() > 0.5 ? 1 : -1;
+                }
+                // Random spawns to keep things interesting
+                if (seededRandom() < CONFIG.RANDOM_SPAWN_RATE) {
+                  newCell.state = STATE.ALIVE;
+                  newCell.age = 0;
+                }
+                break;
+            }
+
+            newGrid[y][x] = newCell;
+          }
+        }
+
+        grid = newGrid;
+        spreadBlood();
+        decayGore();
+      }
+
+      function createGore(x, y, deathType) {
+        const cx = x * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2;
+        const cy = y * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2;
+
+        // Blood pool
+        const pool = {
+          x: cx + (seededRandom() - 0.5) * 20,
+          y: cy + (seededRandom() - 0.5) * 20,
+          radiusX: 15 + seededRandom() * 25,
+          radiusY: 10 + seededRandom() * 15,
+          rotation: seededRandom() * Math.PI,
+          intensity: 0.4 + seededRandom() * 0.4,
+          age: 0
+        };
+
+        // Adjust blood based on death type
+        if (deathType === 'explode' || deathType === 'bisect') {
+          pool.radiusX *= 1.5;
+          pool.radiusY *= 1.5;
+          pool.intensity = 0.7 + seededRandom() * 0.3;
+
+          // Splatter droplets
+          for (let i = 0; i < 12; i++) {
+            const angle = seededRandom() * Math.PI * 2;
+            const dist = 30 + seededRandom() * 60;
+            bloodPools.push({
+              x: cx + Math.cos(angle) * dist,
+              y: cy + Math.sin(angle) * dist,
+              radiusX: 3 + seededRandom() * 8,
+              radiusY: 2 + seededRandom() * 6,
+              rotation: seededRandom() * Math.PI,
+              intensity: 0.3 + seededRandom() * 0.3,
+              age: 0
+            });
+          }
+        }
+
+        bloodPools.push(pool);
+
+        // Body parts
+        const partsToScatter = getPartsForDeathType(deathType);
+        partsToScatter.forEach(partType => {
+          const angle = seededRandom() * Math.PI * 2;
+          const dist = 20 + seededRandom() * 50;
+          bodyParts.push({
+            type: partType,
+            x: cx + Math.cos(angle) * dist,
+            y: cy + Math.sin(angle) * dist,
+            rotation: seededRandom() * Math.PI * 2,
+            scale: 0.6 + seededRandom() * 0.4,
+            age: 0
+          });
+        });
+
+        // Limit arrays to prevent memory issues
+        if (bloodPools.length > CONFIG.MAX_BLOOD_POOLS) {
+          bloodPools = bloodPools.slice(-CONFIG.MAX_BLOOD_POOLS);
+        }
+        if (bodyParts.length > 200) {
+          bodyParts = bodyParts.slice(-200);
+        }
+
+        // Mark gore layer
+        goreLayer[y][x] = { deathType, created: frameCount };
+      }
+
+      function getPartsForDeathType(type) {
+        switch (type) {
+          case 'explode':
+            return ['head', 'torso', 'left_arm', 'right_arm', 'left_leg', 'right_leg'];
+          case 'decapitate':
+            return ['head'];
+          case 'dismember':
+            return seededRandom() > 0.5 ? ['left_arm', 'right_arm'] : ['left_leg', 'right_leg'];
+          case 'bisect':
+            return ['torso', 'left_leg', 'right_leg'];
+          case 'crush':
+            return ['head', 'torso'];
+          default:
+            return [];
+        }
+      }
+
+      function spreadBlood() {
+        const newPools = [];
+        bloodPools.forEach(pool => {
+          if (pool.intensity > 0.2 && seededRandom() < CONFIG.BLOOD_SPREAD_CHANCE) {
+            const angle = seededRandom() * Math.PI * 2;
+            const dist = 5 + seededRandom() * 15;
+            newPools.push({
+              x: pool.x + Math.cos(angle) * dist,
+              y: pool.y + Math.sin(angle) * dist,
+              radiusX: pool.radiusX * 0.6,
+              radiusY: pool.radiusY * 0.6,
+              rotation: seededRandom() * Math.PI,
+              intensity: pool.intensity * 0.5,
+              age: 0
+            });
+          }
+        });
+        bloodPools.push(...newPools);
+      }
+
+      function decayGore() {
+        // Age blood pools
+        bloodPools.forEach(pool => pool.age++);
+        bodyParts.forEach(part => part.age++);
+
+        // Remove very old pools
+        bloodPools = bloodPools.filter(p => p.age < 500 || p.intensity > 0.3);
+        bodyParts = bodyParts.filter(p => p.age < 400);
+      }
+
+      // ============================================
+      // RENDERING
+      // ============================================
+      function draw() {
+        // Clear
+        ctx.fillStyle = COLORS.void;
+        ctx.fillRect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT);
+
+        // Background gradient
+        const bgGrad = ctx.createRadialGradient(
+          CONFIG.WIDTH / 2, CONFIG.HEIGHT / 2, 0,
+          CONFIG.WIDTH / 2, CONFIG.HEIGHT / 2, CONFIG.WIDTH * 0.7
+        );
+        bgGrad.addColorStop(0, COLORS.voidLight);
+        bgGrad.addColorStop(1, COLORS.void);
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT);
+
+        // Draw blood pools (back layer)
+        drawBloodPools();
+
+        // Draw body parts
+        drawBodyParts();
+
+        // Draw cells
+        for (let y = 0; y < rows; y++) {
+          for (let x = 0; x < cols; x++) {
+            const cell = grid[y][x];
+            if (cell.state === STATE.ALIVE) {
+              drawStickFigure(x, y, cell, STATE.ALIVE);
+            } else if (cell.state === STATE.DYING) {
+              drawStickFigure(x, y, cell, STATE.DYING);
+            } else if (cell.state === STATE.DEAD) {
+              drawStickFigure(x, y, cell, STATE.DEAD);
+            }
+          }
+        }
+      }
+
+      function drawBloodPools() {
+        bloodPools.forEach(pool => {
+          const alpha = Math.min(pool.intensity, 0.8) * (1 - pool.age / 600);
+          if (alpha <= 0) return;
+
+          ctx.save();
+          ctx.translate(pool.x, pool.y);
+          ctx.rotate(pool.rotation);
+          ctx.globalAlpha = alpha;
+
+          // Multi-layer blood for depth
+          const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, pool.radiusX);
+          grad.addColorStop(0, COLORS.bloodMid);
+          grad.addColorStop(0.5, COLORS.bloodDark);
+          grad.addColorStop(1, COLORS.bloodBlack);
+
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, pool.radiusX, pool.radiusY, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Highlight
+          ctx.globalAlpha = alpha * 0.3;
+          ctx.fillStyle = COLORS.bloodRed;
+          ctx.beginPath();
+          ctx.ellipse(-pool.radiusX * 0.2, -pool.radiusY * 0.2,
+                      pool.radiusX * 0.4, pool.radiusY * 0.3, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.restore();
+        });
+        ctx.globalAlpha = 1;
+      }
+
+      function drawBodyParts() {
+        bodyParts.forEach(part => {
+          const alpha = Math.max(0, 1 - part.age / 400) * 0.7;
+          if (alpha <= 0) return;
+
+          ctx.save();
+          ctx.translate(part.x, part.y);
+          ctx.rotate(part.rotation);
+          ctx.scale(part.scale, part.scale);
+          ctx.globalAlpha = alpha;
+
+          ctx.strokeStyle = COLORS.stickLight;
+          ctx.lineWidth = CONFIG.LINE_WIDTH_BASE;
+          ctx.lineCap = 'round';
+
+          const size = CONFIG.CELL_SIZE * 0.3;
+
+          switch (part.type) {
+            case 'head':
+              // Head with X eyes
+              ctx.beginPath();
+              ctx.arc(0, 0, size * 0.4, 0, Math.PI * 2);
+              ctx.stroke();
+              // X eyes
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.moveTo(-5, -3);
+              ctx.lineTo(0, 2);
+              ctx.moveTo(0, -3);
+              ctx.lineTo(-5, 2);
+              ctx.moveTo(5, -3);
+              ctx.lineTo(10, 2);
+              ctx.moveTo(10, -3);
+              ctx.lineTo(5, 2);
+              ctx.stroke();
+              // Blood at neck
+              ctx.fillStyle = COLORS.bloodBright;
+              ctx.beginPath();
+              ctx.ellipse(0, size * 0.35, size * 0.15, size * 0.1, 0, 0, Math.PI * 2);
+              ctx.fill();
+              break;
+
+            case 'torso':
+              ctx.beginPath();
+              ctx.moveTo(0, -size * 0.5);
+              ctx.lineTo(0, size * 0.5);
+              ctx.stroke();
+              // Ribs hint
+              ctx.lineWidth = 1;
+              ctx.strokeStyle = COLORS.stickPale;
+              for (let i = -2; i <= 2; i++) {
+                ctx.beginPath();
+                ctx.moveTo(-size * 0.2, i * size * 0.15);
+                ctx.lineTo(size * 0.2, i * size * 0.15);
+                ctx.stroke();
+              }
+              break;
+
+            case 'left_arm':
+            case 'right_arm':
+              ctx.beginPath();
+              ctx.moveTo(-size * 0.4, 0);
+              ctx.lineTo(0, 0);
+              ctx.lineTo(size * 0.3, size * 0.1);
+              ctx.stroke();
+              // Hand
+              ctx.beginPath();
+              ctx.arc(size * 0.3, size * 0.1, 4, 0, Math.PI * 2);
+              ctx.fill();
+              break;
+
+            case 'left_leg':
+            case 'right_leg':
+              ctx.beginPath();
+              ctx.moveTo(0, -size * 0.5);
+              ctx.lineTo(0, size * 0.3);
+              ctx.lineTo(size * 0.15, size * 0.45);
+              ctx.stroke();
+              // Foot
+              ctx.beginPath();
+              ctx.moveTo(size * 0.15, size * 0.45);
+              ctx.lineTo(size * 0.3, size * 0.45);
+              ctx.stroke();
+              break;
+          }
+
+          ctx.restore();
+        });
+        ctx.globalAlpha = 1;
+      }
+
+      function drawStickFigure(gridX, gridY, cell, state) {
+        const cx = gridX * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2;
+        const cy = gridY * CONFIG.CELL_SIZE + CONFIG.CELL_SIZE / 2;
+        const s = CONFIG.CELL_SIZE * CONFIG.FIGURE_SCALE;
+
+        ctx.save();
+        ctx.translate(cx, cy);
+
+        // Apply pose variation
+        if (state === STATE.ALIVE) {
+          ctx.rotate(cell.pose);
+          ctx.scale(cell.facing, 1);
+        }
+
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        if (state === STATE.ALIVE) {
+          drawAliveFigure(s, cell);
+        } else if (state === STATE.DYING) {
+          drawDyingFigure(s, cell);
+        } else if (state === STATE.DEAD) {
+          drawDeadFigure(s, cell);
+        }
+
+        ctx.restore();
+      }
+
+      function drawAliveFigure(s, cell) {
+        const headR = s * 0.18;
+        const breathe = Math.sin(frameCount * 0.05 + cell.age) * 2;
+
+        ctx.strokeStyle = COLORS.stick;
+        ctx.fillStyle = COLORS.stick;
+        ctx.lineWidth = CONFIG.LINE_WIDTH_BASE;
+
+        // Shadow
+        if (CONFIG.ENABLE_SHADOWS) {
+          ctx.save();
+          ctx.globalAlpha = 0.3;
+          ctx.translate(3, 3);
+          drawFigureShape(s, headR, breathe);
+          ctx.restore();
+        }
+
+        // Main figure
+        drawFigureShape(s, headR, breathe);
+
+        // Eyes - dots
+        ctx.beginPath();
+        ctx.arc(-headR * 0.3, -s * 0.32, 2.5, 0, Math.PI * 2);
+        ctx.arc(headR * 0.3, -s * 0.32, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      function drawFigureShape(s, headR, breathe) {
+        // Head
+        ctx.beginPath();
+        ctx.arc(0, -s * 0.28 + breathe * 0.1, headR, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Neck
+        ctx.beginPath();
+        ctx.moveTo(0, -s * 0.1 + breathe * 0.1);
+        ctx.lineTo(0, -s * 0.05);
+        ctx.stroke();
+
+        // Torso
+        ctx.beginPath();
+        ctx.moveTo(0, -s * 0.05);
+        ctx.lineTo(0, s * 0.25);
+        ctx.stroke();
+
+        // Shoulders
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.2, s * 0.02);
+        ctx.lineTo(s * 0.2, s * 0.02);
+        ctx.stroke();
+
+        // Left arm
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.2, s * 0.02);
+        ctx.lineTo(-s * 0.28, s * 0.15);
+        ctx.lineTo(-s * 0.22, s * 0.28);
+        ctx.stroke();
+
+        // Right arm
+        ctx.beginPath();
+        ctx.moveTo(s * 0.2, s * 0.02);
+        ctx.lineTo(s * 0.28, s * 0.15);
+        ctx.lineTo(s * 0.22, s * 0.28);
+        ctx.stroke();
+
+        // Hips
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.1, s * 0.25);
+        ctx.lineTo(s * 0.1, s * 0.25);
+        ctx.stroke();
+
+        // Left leg
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.1, s * 0.25);
+        ctx.lineTo(-s * 0.15, s * 0.42);
+        ctx.lineTo(-s * 0.12, s * 0.55);
+        ctx.stroke();
+
+        // Right leg
+        ctx.beginPath();
+        ctx.moveTo(s * 0.1, s * 0.25);
+        ctx.lineTo(s * 0.15, s * 0.42);
+        ctx.lineTo(s * 0.12, s * 0.55);
+        ctx.stroke();
+
+        // Hands
+        ctx.beginPath();
+        ctx.arc(-s * 0.22, s * 0.28, 3, 0, Math.PI * 2);
+        ctx.arc(s * 0.22, s * 0.28, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Feet
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.12, s * 0.55);
+        ctx.lineTo(-s * 0.18, s * 0.55);
+        ctx.moveTo(s * 0.12, s * 0.55);
+        ctx.lineTo(s * 0.18, s * 0.55);
+        ctx.stroke();
+      }
+
+      function drawDyingFigure(s, cell) {
+        const progress = cell.deathFrame / 8;
+        const headR = s * 0.18;
+
+        ctx.strokeStyle = COLORS.stickMid;
+        ctx.fillStyle = COLORS.stickMid;
+        ctx.lineWidth = CONFIG.LINE_WIDTH_BASE;
+
+        switch (cell.deathType) {
+          case 'explode':
+            drawExplodeDeath(s, progress);
+            break;
+          case 'collapse':
+            drawCollapseDeath(s, progress, headR);
+            break;
+          case 'dismember':
+            drawDismemberDeath(s, progress, headR);
+            break;
+          case 'impale':
+            drawImpaleDeath(s, progress, headR);
+            break;
+          case 'decapitate':
+            drawDecapitateDeath(s, progress, headR);
+            break;
+          case 'bisect':
+            drawBisectDeath(s, progress, headR);
+            break;
+          case 'crush':
+            drawCrushDeath(s, progress, headR);
+            break;
+          default:
+            drawCollapseDeath(s, progress, headR);
+        }
+      }
+
+      function drawExplodeDeath(s, progress) {
+        const spread = progress * s * 0.8;
+
+        // Blood glow
+        if (CONFIG.ENABLE_GLOW) {
+          ctx.save();
+          ctx.globalAlpha = (1 - progress) * 0.5;
+          ctx.fillStyle = COLORS.bloodGlow;
+          ctx.beginPath();
+          ctx.arc(0, 0, spread * 1.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        // Parts flying outward
+        ctx.globalAlpha = 1 - progress * 0.7;
+        const partCount = 8;
+        for (let i = 0; i < partCount; i++) {
+          const angle = (i / partCount) * Math.PI * 2 + progress * 0.5;
+          const dist = spread * (0.5 + (i % 3) * 0.3);
+          const px = Math.cos(angle) * dist;
+          const py = Math.sin(angle) * dist;
+
+          ctx.save();
+          ctx.translate(px, py);
+          ctx.rotate(angle + progress * Math.PI);
+
+          ctx.beginPath();
+          ctx.moveTo(-8, 0);
+          ctx.lineTo(8, 0);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // Blood splatter
+        ctx.fillStyle = COLORS.bloodBright;
+        for (let i = 0; i < 12; i++) {
+          const angle = seededRandom() * Math.PI * 2;
+          const dist = spread * (0.3 + seededRandom() * 0.7);
+          ctx.beginPath();
+          ctx.arc(Math.cos(angle) * dist, Math.sin(angle) * dist,
+                  2 + seededRandom() * 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.globalAlpha = 1;
+      }
+
+      function drawCollapseDeath(s, progress, headR) {
+        ctx.save();
+
+        // Rotate and compress
+        ctx.rotate(progress * Math.PI * 0.4);
+        ctx.scale(1, 1 - progress * 0.6);
+        ctx.globalAlpha = 1 - progress * 0.3;
+
+        // Draw crumpling figure
+        ctx.beginPath();
+        ctx.arc(0, -s * 0.28, headR, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(0, -s * 0.1);
+        ctx.lineTo(0, s * 0.25 + progress * s * 0.1);
+        ctx.stroke();
+
+        // Limp arms
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.2, s * 0.02);
+        ctx.lineTo(-s * 0.3 - progress * 0.1, s * 0.2 + progress * 0.15);
+        ctx.moveTo(s * 0.2, s * 0.02);
+        ctx.lineTo(s * 0.25, s * 0.25 + progress * 0.1);
+        ctx.stroke();
+
+        // Legs buckling
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.1, s * 0.25);
+        ctx.lineTo(-s * 0.2, s * 0.4);
+        ctx.lineTo(-s * 0.15 - progress * 0.05, s * 0.5);
+        ctx.moveTo(s * 0.1, s * 0.25);
+        ctx.lineTo(s * 0.15, s * 0.42);
+        ctx.lineTo(s * 0.1, s * 0.52);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      function drawDismemberDeath(s, progress, headR) {
+        const detachDist = progress * s * 0.5;
+
+        // Main body
+        ctx.globalAlpha = 1 - progress * 0.2;
+
+        ctx.beginPath();
+        ctx.arc(0, -s * 0.28, headR, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(0, -s * 0.1);
+        ctx.lineTo(0, s * 0.25);
+        ctx.stroke();
+
+        // Legs
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.1, s * 0.25);
+        ctx.lineTo(-s * 0.15, s * 0.55);
+        ctx.moveTo(s * 0.1, s * 0.25);
+        ctx.lineTo(s * 0.15, s * 0.55);
+        ctx.stroke();
+
+        // Blood stumps
+        ctx.fillStyle = COLORS.bloodBright;
+        ctx.beginPath();
+        ctx.arc(-s * 0.2, s * 0.02, 5, 0, Math.PI * 2);
+        ctx.arc(s * 0.2, s * 0.02, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Detached arms
+        ctx.strokeStyle = COLORS.stickLight;
+        ctx.save();
+        ctx.translate(-detachDist - s * 0.3, detachDist * 0.5);
+        ctx.rotate(-progress * Math.PI * 0.5);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(s * 0.15, s * 0.1);
+        ctx.lineTo(s * 0.1, s * 0.22);
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.save();
+        ctx.translate(detachDist + s * 0.3, detachDist * 0.3);
+        ctx.rotate(progress * Math.PI * 0.3);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(s * 0.12, s * 0.12);
+        ctx.lineTo(s * 0.08, s * 0.25);
+        ctx.stroke();
+        ctx.restore();
+
+        // Blood drips
+        ctx.fillStyle = COLORS.bloodRed;
+        const dripY = s * 0.1 + progress * s * 0.3;
+        ctx.beginPath();
+        ctx.ellipse(-s * 0.2, dripY, 3, 5 + progress * 3, 0, 0, Math.PI * 2);
+        ctx.ellipse(s * 0.2, dripY * 0.8, 3, 4 + progress * 2, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.globalAlpha = 1;
+      }
+
+      function drawImpaleDeath(s, progress, headR) {
+        ctx.save();
+        ctx.translate(0, progress * s * 0.15);
+
+        // Drooping head
+        ctx.beginPath();
+        ctx.arc(headR * 0.3, -s * 0.22, headR, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // X eyes
+        ctx.lineWidth = 2;
+        const eyeX = headR * 0.3;
+        const eyeY = -s * 0.24;
+        ctx.beginPath();
+        ctx.moveTo(eyeX - 6, eyeY - 3);
+        ctx.lineTo(eyeX - 2, eyeY + 1);
+        ctx.moveTo(eyeX - 2, eyeY - 3);
+        ctx.lineTo(eyeX - 6, eyeY + 1);
+        ctx.moveTo(eyeX + 2, eyeY - 3);
+        ctx.lineTo(eyeX + 6, eyeY + 1);
+        ctx.moveTo(eyeX + 6, eyeY - 3);
+        ctx.lineTo(eyeX + 2, eyeY + 1);
+        ctx.stroke();
+        ctx.lineWidth = CONFIG.LINE_WIDTH_BASE;
+
+        // Limp body
+        ctx.beginPath();
+        ctx.moveTo(0, -s * 0.05);
+        ctx.lineTo(0, s * 0.3);
+        ctx.stroke();
+
+        // Limp arms
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.2, s * 0.02);
+        ctx.lineTo(-s * 0.25, s * 0.2 + progress * 0.1);
+        ctx.moveTo(s * 0.2, s * 0.02);
+        ctx.lineTo(s * 0.28, s * 0.22 + progress * 0.08);
+        ctx.stroke();
+
+        // Limp legs
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.1, s * 0.25);
+        ctx.lineTo(-s * 0.12, s * 0.5 + progress * 0.05);
+        ctx.moveTo(s * 0.1, s * 0.25);
+        ctx.lineTo(s * 0.14, s * 0.48 + progress * 0.03);
+        ctx.stroke();
+
+        // Blood drip from body
+        ctx.fillStyle = COLORS.bloodBright;
+        for (let i = 0; i < 3; i++) {
+          const dripProgress = (progress + i * 0.2) % 1;
+          const dripY = s * 0.3 + dripProgress * s * 0.4;
+          ctx.beginPath();
+          ctx.ellipse(0, dripY, 2, 4 + dripProgress * 2, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.restore();
+      }
+
+      function drawDecapitateDeath(s, progress, headR) {
+        const headFly = progress * s * 0.6;
+
+        // Body without head
+        ctx.globalAlpha = 1 - progress * 0.2;
+
+        // Neck stump with blood
+        ctx.fillStyle = COLORS.bloodBright;
+        ctx.beginPath();
+        ctx.arc(0, -s * 0.1, 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Body collapsing
+        ctx.save();
+        ctx.rotate(progress * Math.PI * 0.2);
+
+        ctx.beginPath();
+        ctx.moveTo(0, -s * 0.05);
+        ctx.lineTo(0, s * 0.25);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.2, s * 0.02);
+        ctx.lineTo(-s * 0.28, s * 0.18);
+        ctx.moveTo(s * 0.2, s * 0.02);
+        ctx.lineTo(s * 0.25, s * 0.2);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.1, s * 0.25);
+        ctx.lineTo(-s * 0.15, s * 0.5);
+        ctx.moveTo(s * 0.1, s * 0.25);
+        ctx.lineTo(s * 0.12, s * 0.52);
+        ctx.stroke();
+
+        ctx.restore();
+
+        // Flying head
+        ctx.save();
+        ctx.translate(-headFly * 0.5, -s * 0.3 - headFly);
+        ctx.rotate(progress * Math.PI * 2);
+
+        ctx.strokeStyle = COLORS.stickLight;
+        ctx.beginPath();
+        ctx.arc(0, 0, headR, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // X eyes
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-5, -3);
+        ctx.lineTo(0, 2);
+        ctx.moveTo(0, -3);
+        ctx.lineTo(-5, 2);
+        ctx.moveTo(5, -3);
+        ctx.lineTo(10, 2);
+        ctx.moveTo(10, -3);
+        ctx.lineTo(5, 2);
+        ctx.stroke();
+
+        // Blood trail
+        ctx.fillStyle = COLORS.bloodRed;
+        ctx.beginPath();
+        ctx.ellipse(0, headR + 2, 4, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+
+        // Blood fountain from neck
+        ctx.fillStyle = COLORS.bloodBright;
+        for (let i = 0; i < 5; i++) {
+          const fountainProgress = (progress * 2 + i * 0.15) % 1;
+          const fx = (seededRandom() - 0.5) * 20;
+          const fy = -s * 0.1 - fountainProgress * s * 0.3;
+          ctx.beginPath();
+          ctx.arc(fx, fy, 2 + seededRandom() * 3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.globalAlpha = 1;
+      }
+
+      function drawBisectDeath(s, progress, headR) {
+        const splitDist = progress * s * 0.4;
+
+        // Upper half sliding
+        ctx.save();
+        ctx.translate(splitDist * 0.3, -splitDist * 0.2);
+        ctx.rotate(progress * Math.PI * 0.15);
+
+        ctx.beginPath();
+        ctx.arc(0, -s * 0.28, headR, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(0, -s * 0.1);
+        ctx.lineTo(0, s * 0.1);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.2, s * 0.02);
+        ctx.lineTo(-s * 0.28, s * 0.15);
+        ctx.moveTo(s * 0.2, s * 0.02);
+        ctx.lineTo(s * 0.25, s * 0.18);
+        ctx.stroke();
+
+        // Exposed cross-section
+        ctx.fillStyle = COLORS.bloodBright;
+        ctx.beginPath();
+        ctx.ellipse(0, s * 0.1, 8, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+
+        // Lower half
+        ctx.save();
+        ctx.translate(-splitDist * 0.2, splitDist * 0.3);
+
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.1, s * 0.15);
+        ctx.lineTo(s * 0.1, s * 0.15);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.1, s * 0.15);
+        ctx.lineTo(-s * 0.18, s * 0.5);
+        ctx.moveTo(s * 0.1, s * 0.15);
+        ctx.lineTo(s * 0.15, s * 0.52);
+        ctx.stroke();
+
+        ctx.fillStyle = COLORS.bloodBright;
+        ctx.beginPath();
+        ctx.ellipse(0, s * 0.15, 8, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+
+        // Entrails (viscera hint)
+        ctx.strokeStyle = COLORS.bloodMid;
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = progress;
+        ctx.beginPath();
+        for (let i = 0; i < 3; i++) {
+          const startY = s * 0.1 - splitDist * 0.2;
+          const endY = s * 0.15 + splitDist * 0.3;
+          const midX = (seededRandom() - 0.5) * 20;
+          ctx.moveTo(0, startY);
+          ctx.quadraticCurveTo(midX, (startY + endY) / 2, 0, endY);
+        }
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        ctx.lineWidth = CONFIG.LINE_WIDTH_BASE;
+      }
+
+      function drawCrushDeath(s, progress, headR) {
+        const crushAmount = progress * 0.7;
+
+        ctx.save();
+        ctx.scale(1 + crushAmount * 0.5, 1 - crushAmount);
+        ctx.globalAlpha = 1 - progress * 0.3;
+
+        // Flattened head
+        ctx.beginPath();
+        ctx.ellipse(0, -s * 0.25, headR * (1 + crushAmount), headR * (1 - crushAmount * 0.8), 0, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Compressed body
+        ctx.beginPath();
+        ctx.moveTo(0, -s * 0.1);
+        ctx.lineTo(0, s * 0.2);
+        ctx.stroke();
+
+        // Arms splayed
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.3, s * 0.05);
+        ctx.lineTo(-s * 0.4, s * 0.15);
+        ctx.moveTo(s * 0.3, s * 0.05);
+        ctx.lineTo(s * 0.4, s * 0.12);
+        ctx.stroke();
+
+        // Legs splayed
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.15, s * 0.2);
+        ctx.lineTo(-s * 0.25, s * 0.4);
+        ctx.moveTo(s * 0.15, s * 0.2);
+        ctx.lineTo(s * 0.22, s * 0.38);
+        ctx.stroke();
+
+        ctx.restore();
+
+        // Blood spreading outward
+        ctx.fillStyle = COLORS.bloodRed;
+        ctx.globalAlpha = progress * 0.6;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, s * 0.5 * progress, s * 0.3 * progress, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+
+      function drawDeadFigure(s, cell) {
+        ctx.save();
+        ctx.rotate(Math.PI / 2 + (seededRandom() - 0.5) * 0.3);
+        ctx.globalAlpha = 0.5;
+        ctx.strokeStyle = COLORS.stickPale;
+        ctx.lineWidth = CONFIG.LINE_WIDTH_BASE * 0.8;
+
+        const headR = s * 0.15;
+
+        // Flat head with X eyes
+        ctx.beginPath();
+        ctx.arc(-s * 0.25, 0, headR, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.28, -3);
+        ctx.lineTo(-s * 0.22, 3);
+        ctx.moveTo(-s * 0.22, -3);
+        ctx.lineTo(-s * 0.28, 3);
+        ctx.stroke();
+        ctx.lineWidth = CONFIG.LINE_WIDTH_BASE * 0.8;
+
+        // Torso
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.1, 0);
+        ctx.lineTo(s * 0.15, 0);
+        ctx.stroke();
+
+        // Limp limbs
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.05, 0);
+        ctx.lineTo(-s * 0.08, s * 0.12);
+        ctx.moveTo(0, 0);
+        ctx.lineTo(s * 0.03, -s * 0.1);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(s * 0.1, 0);
+        ctx.lineTo(s * 0.18, s * 0.08);
+        ctx.moveTo(s * 0.15, 0);
+        ctx.lineTo(s * 0.2, -s * 0.1);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      // ============================================
+      // RECORDING
+      // ============================================
+      function setupRecording() {
+        const recordBtn = document.getElementById('recordBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const status = document.getElementById('status');
+
+        recordBtn.addEventListener('click', () => {
+          if (isRecording) {
+            stopRecording();
+          } else {
+            startRecording();
+          }
+        });
+
+        resetBtn.addEventListener('click', () => {
+          seed = Date.now();
+          init();
+          status.textContent = 'Reset with new seed: ' + seed;
+        });
+      }
+
+      function startRecording() {
+        const stream = canvas.captureStream(30);
+        mediaRecorder = new MediaRecorder(stream, {
+          mimeType: 'video/webm;codecs=vp9',
+          videoBitsPerSecond: 8000000
+        });
+
+        recordedChunks = [];
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) {
+            recordedChunks.push(e.data);
+          }
+        };
+
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `death-of-life-${Date.now()}.webm`;
+          a.click();
+          URL.revokeObjectURL(url);
+        };
+
+        mediaRecorder.start();
+        isRecording = true;
+        document.getElementById('recordBtn').textContent = 'Stop Recording';
+        document.getElementById('status').textContent = 'Recording...';
+      }
+
+      function stopRecording() {
+        mediaRecorder.stop();
+        isRecording = false;
+        document.getElementById('recordBtn').textContent = 'Start Recording';
+        document.getElementById('status').textContent = 'Recording saved';
+      }
+
+      // ============================================
+      // MAIN LOOP
+      // ============================================
+      function loop(timestamp) {
+        frameCount++;
+
+        if (timestamp - lastTick > CONFIG.TICK_INTERVAL / speedMultiplier) {
+          tick();
+          lastTick = timestamp;
+        }
+
+        draw();
+        requestAnimationFrame(loop);
+      }
+
+      // Start
+      init();
+    })();
+  </script>
+</body>
+</html>
